@@ -1,0 +1,1129 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Painel Estratégico de Clientes — CRM iFood</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --red:     #EA1D2C;
+      --red-d:   #C4111F;
+      --red-l:   #fff0f1;
+      --bg:      #F5F5F5;
+      --card:    #FFFFFF;
+      --text:    #3E3E3E;
+      --muted:   #717171;
+      --border:  #E0E0E0;
+      --green:   #2DB14B;
+      --orange:  #F5A623;
+      --blue:    #1A73E8;
+      --purple:  #7B1FA2;
+      --shadow:  0 2px 8px rgba(0,0,0,0.08);
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+    /* ── HEADER ── */
+    .header { background: var(--red); padding: 18px 32px; display: flex; align-items: center; gap: 16px; box-shadow: 0 2px 12px rgba(0,0,0,0.2); }
+    .header h1 { color: #fff; font-size: 20px; font-weight: 800; font-family: 'Plus Jakarta Sans', sans-serif; line-height: 1.2; }
+    .header .sub { color: rgba(255,255,255,0.75); font-size: 12px; margin-top: 2px; }
+    .header-logo { background: #fff; border-radius: 10px; width: 44px; height: 44px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+
+    /* ── LAYOUT ── */
+    .main { max-width: 1440px; margin: 0 auto; padding: 28px 24px 60px; }
+    .card { background: var(--card); border-radius: 14px; box-shadow: var(--shadow); padding: 22px; }
+    .card + .card { margin-top: 0; }
+
+    /* ── SECTION TITLES ── */
+    .sec-title { font-size: 17px; font-weight: 800; font-family: 'Plus Jakarta Sans', sans-serif; display: flex; align-items: center; gap: 10px; margin-bottom: 18px; }
+    .sec-title::before { content: ''; display: block; width: 4px; height: 20px; background: var(--red); border-radius: 2px; flex-shrink: 0; }
+
+    /* ── INPUT GRID ── */
+    .input-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+    @media (max-width: 900px) { .input-grid { grid-template-columns: 1fr; } }
+    .input-label { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; display: block; margin-bottom: 6px; }
+    textarea {
+      width: 100%; font-family: 'Courier New', monospace; font-size: 11.5px; line-height: 1.5;
+      resize: vertical; border: 2px solid var(--border); border-radius: 8px; padding: 10px 12px;
+      color: var(--text); transition: border-color .2s; background: #FAFAFA;
+    }
+    textarea:focus { outline: none; border-color: var(--red); background: #fff; }
+
+    /* ── BUTTON ── */
+    .btn-primary {
+      background: var(--red); color: #fff; border: none; border-radius: 10px;
+      padding: 12px 32px; font-size: 15px; font-weight: 700; cursor: pointer;
+      font-family: 'Plus Jakarta Sans', sans-serif; transition: background .15s, transform .1s;
+      display: inline-flex; align-items: center; gap: 8px;
+    }
+    .btn-primary:hover { background: var(--red-d); }
+    .btn-primary:active { transform: scale(.97); }
+
+    /* ── KPI GRID ── */
+    .kpi-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 14px; margin-bottom: 20px; }
+    .kpi-card { background: var(--card); border-radius: 12px; box-shadow: var(--shadow); padding: 18px 20px; border-left: 4px solid var(--red); }
+    .kpi-label { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; margin-bottom: 6px; }
+    .kpi-value { font-size: 26px; font-weight: 800; font-family: 'Plus Jakarta Sans', sans-serif; line-height: 1; }
+    .kpi-sub { font-size: 11px; color: var(--muted); margin-top: 5px; }
+
+    /* ── PARETO BANNER ── */
+    .pareto-banner {
+      background: linear-gradient(130deg, var(--red) 0%, #FF6B35 100%);
+      color: #fff; border-radius: 12px; padding: 18px 24px; margin-bottom: 20px;
+    }
+    .pareto-banner .tag { font-size: 11px; font-weight: 700; letter-spacing: .08em; opacity: .75; margin-bottom: 6px; }
+    .pareto-banner .msg { font-size: 17px; font-weight: 800; font-family: 'Plus Jakarta Sans', sans-serif; }
+    .pareto-banner .detail { font-size: 12px; opacity: .85; margin-top: 4px; }
+
+    /* ── TABLE ── */
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+    th {
+      background: #FAFAFA; color: var(--muted); font-weight: 700;
+      text-transform: uppercase; font-size: 10.5px; letter-spacing: .05em;
+      padding: 9px 13px; text-align: left; border-bottom: 2px solid var(--border);
+      white-space: nowrap; position: sticky; top: 0;
+    }
+    td { padding: 9px 13px; border-bottom: 1px solid #F0F0F0; vertical-align: middle; }
+    tbody tr { cursor: pointer; transition: background .1s; }
+    tbody tr:hover td { background: #FFF5F5; }
+    .rank { background: var(--red-l); color: var(--red); font-weight: 800; border-radius: 6px; padding: 2px 8px; font-size: 11px; display:inline-block; }
+    .rank.r1 { background: #FFF8E1; color: #B8860B; }
+    .rank.r2 { background: #F0F0F0; color: #607D8B; }
+    .rank.r3 { background: #FFF3E0; color: #BF6A2E; }
+
+    /* ── SELECTOR ── */
+    select {
+      border: 2px solid var(--border); border-radius: 8px; padding: 9px 14px;
+      font-size: 13.5px; font-family: 'Inter', sans-serif; color: var(--text);
+      background: #fff; cursor: pointer; min-width: 280px; max-width: 480px;
+    }
+    select:focus { outline: none; border-color: var(--red); }
+
+    /* ── DEEP DIVE GRIDS ── */
+    .dd-grid-3 { display: grid; grid-template-columns: 200px 1fr 1fr; gap: 16px; align-items: start; margin-bottom: 16px; }
+    .dd-grid-3b { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+    @media (max-width: 1100px) {
+      .dd-grid-3, .dd-grid-3b { grid-template-columns: 1fr; }
+    }
+
+    /* ── SCORE SVG ── */
+    .score-wrap { text-align: center; padding: 4px 0 8px; }
+
+    /* ── METRIC ROWS ── */
+    .metric-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #F5F5F5; }
+    .metric-row:last-child { border-bottom: none; }
+    .metric-label { font-size: 12px; color: var(--muted); }
+    .metric-value { font-size: 14px; font-weight: 700; }
+
+    /* ── TIPO PILLS ── */
+    .pill { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: 999px; font-size: 11.5px; font-weight: 700; white-space: nowrap; }
+    .pill-novos      { background: #E8F5E9; color: #2E7D32; }
+    .pill-frequentes { background: #E3F2FD; color: #1565C0; }
+    .pill-recuperados{ background: #F3E5F5; color: #6A1B9A; }
+    .pill-alerta     { background: #FFF3E0; color: #E65100; }
+    .pill-sumidos    { background: #F5F5F5; color: #616161; }
+
+    /* ── MINI BAR ── */
+    .mini-bar-wrap { display: flex; align-items: center; gap: 6px; }
+    .mini-bar-track { width: 56px; height: 5px; background: #E0E0E0; border-radius: 3px; overflow: hidden; flex-shrink: 0; }
+    .mini-bar-fill  { height: 100%; border-radius: 3px; }
+
+    /* ── TOAST ── */
+    .toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; }
+    .toast {
+      padding: 11px 18px; border-radius: 10px; color: #fff; font-weight: 600;
+      font-size: 13.5px; box-shadow: 0 4px 18px rgba(0,0,0,0.22);
+      animation: toast-in .3s ease; pointer-events: none;
+    }
+    .toast-success { background: var(--green); }
+    .toast-error   { background: var(--red); }
+    .toast-info    { background: var(--blue); }
+    @keyframes toast-in { from { transform: translateX(110%); opacity: 0; } to { transform: none; opacity: 1; } }
+
+    /* ── MISC ── */
+    .divider { height: 1px; background: var(--border); margin: 20px 0; }
+    .empty-msg { color: var(--muted); font-size: 13px; padding: 12px 0; }
+  </style>
+</head>
+<body>
+
+<!-- ─────────────────────── HEADER ─────────────────────── -->
+<header class="header">
+  <div class="header-logo">
+    <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+      <rect x="2" y="4"  width="24" height="4" rx="2" fill="#EA1D2C"/>
+      <rect x="2" y="12" width="16" height="4" rx="2" fill="#EA1D2C"/>
+      <rect x="2" y="20" width="24" height="4" rx="2" fill="#EA1D2C"/>
+    </svg>
+  </div>
+  <div>
+    <h1>Painel Estratégico de Clientes</h1>
+    <div class="sub">CRM iFood · Análise de Rede · Versão 2.0</div>
+  </div>
+</header>
+
+<!-- ─────────────────────── MAIN ─────────────────────── -->
+<main class="main">
+
+  <!-- INPUT SECTION -->
+  <div class="card" style="margin-bottom:20px;" id="inputSection">
+    <div class="sec-title">Importar Dados do iFood</div>
+    <p style="font-size:12.5px; color:var(--muted); margin-bottom:18px; line-height:1.6;">
+      Copie os dados de cada aba do relatório iFood e cole nos campos abaixo.<br>
+      O sistema detecta o delimitador automaticamente (TAB, pipe, ponto-e-vírgula ou vírgula).
+    </p>
+
+    <div class="input-grid">
+      <div>
+        <label class="input-label" for="inputActive">🟢 Clientes Ativos</label>
+        <textarea id="inputActive" rows="9" placeholder="Cole aqui os dados da aba Clientes Ativos...&#10;(Novos, Frequentes, Recuperados)"></textarea>
+      </div>
+      <div>
+        <label class="input-label" for="inputInactive">🔴 Clientes Inativos</label>
+        <textarea id="inputInactive" rows="9" placeholder="Cole aqui os dados da aba Clientes Inativos...&#10;(Em alerta, Sumidos)"></textarea>
+      </div>
+      <div>
+        <label class="input-label" for="inputRadius">📍 Clientes por Raio</label>
+        <textarea id="inputRadius" rows="9" placeholder="Cole aqui os dados da aba Clientes por Raio...&#10;(km × total de clientes)"></textarea>
+      </div>
+    </div>
+
+    <div style="display:flex; align-items:center; gap:16px; flex-wrap:wrap;">
+      <button class="btn-primary" id="btnProcess">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polygon points="5 3 19 12 5 21 5 3"/>
+        </svg>
+        Processar Dados
+      </button>
+      <span id="statusMsg" style="font-size:12.5px; color:var(--muted);"></span>
+    </div>
+  </div>
+
+  <!-- NETWORK SECTION (hidden until processed) -->
+  <div id="networkSection" style="display:none;">
+
+    <div class="sec-title">Visão Geral da Rede</div>
+
+    <!-- KPI Cards -->
+    <div class="kpi-grid" id="kpiNetwork"></div>
+
+    <!-- Pareto Banner -->
+    <div id="paretoBanner"></div>
+
+    <!-- Ranking Table -->
+    <div class="card" style="margin-top:4px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; flex-wrap:wrap; gap:8px;">
+        <div class="sec-title" style="margin-bottom:0;">Ranking de Lojas por GMV</div>
+        <span id="rankingCount" style="font-size:11.5px; color:var(--muted);"></span>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:36px;">#</th>
+              <th>Loja · Panorama</th>
+              <th>UF / Cidade</th>
+              <th>GMV</th>
+              <th>Pedidos</th>
+              <th>Ticket Médio</th>
+              <th>Clientes</th>
+              <th>Freq. Média</th>
+              <th>Saúde</th>
+            </tr>
+          </thead>
+          <tbody id="rankingBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Store Selector -->
+    <div class="card" style="margin-top:16px;">
+      <div class="sec-title" style="margin-bottom:12px;">Análise Individual de Loja</div>
+      <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+        <label style="font-size:13px; font-weight:600; white-space:nowrap;">Selecionar Loja:</label>
+        <select id="storeSelector"></select>
+      </div>
+    </div>
+
+  </div><!-- /networkSection -->
+
+  <!-- DEEP DIVE SECTION -->
+  <div id="deepDiveSection" style="display:none; margin-top:16px;">
+    <div id="deepDiveContent"></div>
+  </div>
+
+</main>
+
+<!-- Toast Container -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- ═══════════════════════ SCRIPT ═══════════════════════ -->
+<script>
+'use strict';
+
+// ──────────────────────────────────────────────
+// GLOBAL STATE
+// ──────────────────────────────────────────────
+let STORES_DATA = [];
+const CHARTS   = {};   // keyed chart instances – destroyed before re-render
+
+const ACTIVE_TYPES   = ['Novos', 'Frequentes', 'Recuperados'];
+const INACTIVE_TYPES = ['Em alerta', 'Sumidos'];
+const ALL_TYPES      = [...ACTIVE_TYPES, ...INACTIVE_TYPES];
+
+const TIPO_STYLE = {
+  'Novos'       : { pill: 'pill-novos',       color: '#2E7D32', bg: 'rgba(46,125,50,0.75)' },
+  'Frequentes'  : { pill: 'pill-frequentes',  color: '#1565C0', bg: 'rgba(21,101,192,0.75)' },
+  'Recuperados' : { pill: 'pill-recuperados', color: '#6A1B9A', bg: 'rgba(106,27,154,0.75)' },
+  'Em alerta'   : { pill: 'pill-alerta',      color: '#E65100', bg: 'rgba(230,81,0,0.75)' },
+  'Sumidos'     : { pill: 'pill-sumidos',     color: '#616161', bg: 'rgba(97,97,97,0.75)' },
+};
+
+// ──────────────────────────────────────────────
+// FORMATTING HELPERS
+// ──────────────────────────────────────────────
+const fmtN   = n => Math.round(n).toLocaleString('pt-BR');
+const fmtCur = n => 'R$ ' + n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const fmtPct = n => n.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + '%';
+const fmtDec = (n, d=2) => n.toLocaleString('pt-BR', { minimumFractionDigits: d, maximumFractionDigits: d });
+
+// ──────────────────────────────────────────────
+// TOAST
+// ──────────────────────────────────────────────
+function showToast(msg, type = 'info') {
+  const wrap = document.getElementById('toastContainer');
+  const el   = document.createElement('div');
+  el.className = `toast toast-${type}`;
+  el.textContent = msg;
+  wrap.appendChild(el);
+  setTimeout(() => {
+    el.style.transition = 'opacity .3s';
+    el.style.opacity = '0';
+    setTimeout(() => el.remove(), 320);
+  }, 3500);
+}
+
+// ──────────────────────────────────────────────
+// PARSER – DELIMITER DETECTION
+// ──────────────────────────────────────────────
+/**
+ * BUG FIX #1: Prefer TAB first (Excel default), then fall back.
+ * Comma scored last to avoid false positives from decimal values.
+ */
+function detectDelimiter(line) {
+  const order = ['\t', '|', ';', ','];
+  for (const d of order) {
+    if (line.includes(d)) return d;
+  }
+  return '\t';
+}
+
+/**
+ * BUG FIX #2: Strip surrounding quotes (Excel sometimes wraps cells).
+ */
+function splitLine(line, delim) {
+  return line.split(delim).map(s => s.trim().replace(/^"(.*)"$/, '$1'));
+}
+
+/**
+ * BUG FIX #3: parseNum handles both BR format (1.234,56)
+ * and plain floats (1234.56) – safe for Excel numeric export.
+ */
+function parseNum(v) {
+  if (v === null || v === undefined) return 0;
+  const s = String(v).trim().replace(/[R$\s]/g, '');
+  // Detect BR format: has dot-thousands + comma-decimal  e.g. "1.234,56"
+  const brFormat = /^\d{1,3}(\.\d{3})+(,\d+)?$/.test(s);
+  const clean = brFormat
+    ? s.replace(/\./g, '').replace(',', '.')
+    : s.replace(',', '.');
+  const n = parseFloat(clean);
+  return isNaN(n) ? 0 : n;
+}
+
+/**
+ * BUG FIX #4: Detect header row robustly.
+ * ID column (index 2) must be a positive integer for data rows.
+ */
+function isDataRow(parts, minLen) {
+  if (parts.length < minLen) return false;
+  const id = String(parts[2] || '').trim();
+  return /^\d+$/.test(id) && Number(id) > 0;
+}
+
+// ── Parse Clientes Ativos ──
+// Columns: Mês|Marca|Id da Loja|Nome da Loja|Estado|Cidade|Tipo|
+//          Total pedidos|Valor vendas|Ticket médio|Frequência|Total clientes|
+//          c1|c2|c3|c4|c5+
+function parseActive(text) {
+  const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+  if (!lines.length) return [];
+  const delim = detectDelimiter(lines[0]);
+  return lines.reduce((acc, line) => {
+    const p = splitLine(line, delim);
+    if (!isDataRow(p, 12)) return acc;
+    acc.push({
+      idLoja  : String(p[2]).trim(),
+      nomeLoja: p[3] || '',
+      uf      : (p[4] || '').toUpperCase().trim(),
+      cidade  : (p[5] || '').toUpperCase().trim(),
+      tipo    : (p[6] || '').trim(),
+      pedidos : parseNum(p[7]),
+      vendas  : parseNum(p[8]),
+      // BUG FIX #5: ignore sheet's pre-calculated ticket—we recalculate.
+      freq    : parseNum(p[10]),
+      clientes: parseNum(p[11]),
+      c1: p[12] !== undefined ? parseNum(p[12]) : 0,
+      c2: p[13] !== undefined ? parseNum(p[13]) : 0,
+      c3: p[14] !== undefined ? parseNum(p[14]) : 0,
+      c4: p[15] !== undefined ? parseNum(p[15]) : 0,
+      c5: p[16] !== undefined ? parseNum(p[16]) : 0,
+    });
+    return acc;
+  }, []);
+}
+
+// ── Parse Clientes Inativos ──
+// Columns: Mês|Marca|Id|Nome|Estado|Cidade|Tipo|
+//          Total pedidos|Valor vendas|Ticket médio|Frequência|Total clientes
+function parseInactive(text) {
+  const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+  if (!lines.length) return [];
+  const delim = detectDelimiter(lines[0]);
+  return lines.reduce((acc, line) => {
+    const p = splitLine(line, delim);
+    if (!isDataRow(p, 12)) return acc;
+    acc.push({
+      idLoja  : String(p[2]).trim(),
+      nomeLoja: p[3] || '',
+      uf      : (p[4] || '').toUpperCase().trim(),
+      cidade  : (p[5] || '').toUpperCase().trim(),
+      tipo    : (p[6] || '').trim(),
+      pedidos : parseNum(p[7]),
+      vendas  : parseNum(p[8]),
+      freq    : parseNum(p[10]),
+      clientes: parseNum(p[11]),
+    });
+    return acc;
+  }, []);
+}
+
+// ── Parse Clientes por Raio ──
+// Columns: Mês|Marca|Id|Nome|Estado|Cidade|Raio (km)|Total clientes
+function parseRadius(text) {
+  const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+  if (!lines.length) return [];
+  const delim = detectDelimiter(lines[0]);
+  return lines.reduce((acc, line) => {
+    const p = splitLine(line, delim);
+    if (!isDataRow(p, 8)) return acc;
+    const km = parseNum(p[6]);
+    if (km <= 0) return acc;     // BUG FIX #6: ignore zero/invalid km rows
+    acc.push({
+      idLoja  : String(p[2]).trim(),
+      nomeLoja: p[3] || '',
+      uf      : (p[4] || '').toUpperCase().trim(),
+      cidade  : (p[5] || '').toUpperCase().trim(),
+      km,
+      clientes: parseNum(p[7]),
+    });
+    return acc;
+  }, []);
+}
+
+// ──────────────────────────────────────────────
+// AGGREGATION
+// BUG FIX #7: pedidos/vendas totais = APENAS tipos ativos.
+// BUG FIX #8: ticket médio calculado como vendas/pedidos (não média de médias).
+// BUG FIX #9: raio dinâmico – suporta qualquer faixa de km (ex: 1-11).
+// BUG FIX #10: c1-c5 acumulados SOMENTE dos tipos ativos (Novos, Freq., Rec.).
+// ──────────────────────────────────────────────
+function aggregateByStore(activeRows, inactiveRows, radiusRows) {
+  const map = new Map();
+
+  function getStore(id, name, uf, cidade) {
+    if (!map.has(id)) {
+      map.set(id, {
+        idLoja: id, nomeLoja: name, uf, cidade,
+        pedidos: 0, vendas: 0,
+        c1: 0, c2: 0, c3: 0, c4: 0, c5: 0,
+        tipos: {},
+        raio: {},
+      });
+    }
+    return map.get(id);
+  }
+
+  // ── Active rows ──
+  for (const row of activeRows) {
+    const s = getStore(row.idLoja, row.nomeLoja, row.uf, row.cidade);
+    const t = row.tipo;
+    if (!s.tipos[t]) s.tipos[t] = { cli: 0, ped: 0, rec: 0, tick: 0, freq: 0 };
+    s.tipos[t].cli += row.clientes;
+    s.tipos[t].ped += row.pedidos;
+    s.tipos[t].rec += row.vendas;
+    s.tipos[t].freq = row.freq;   // last value wins (same period)
+
+    if (ACTIVE_TYPES.includes(t)) {
+      s.pedidos += row.pedidos;
+      s.vendas  += row.vendas;
+      s.c1 += row.c1;
+      s.c2 += row.c2;
+      s.c3 += row.c3;
+      s.c4 += row.c4;
+      s.c5 += row.c5;
+    }
+  }
+
+  // ── Inactive rows ──
+  for (const row of inactiveRows) {
+    const s = getStore(row.idLoja, row.nomeLoja, row.uf, row.cidade);
+    const t = row.tipo;
+    if (!s.tipos[t]) s.tipos[t] = { cli: 0, ped: 0, rec: 0, tick: 0, freq: 0 };
+    s.tipos[t].cli += row.clientes;
+    s.tipos[t].ped += row.pedidos;
+    s.tipos[t].rec += row.vendas;
+    s.tipos[t].freq = row.freq;
+  }
+
+  // ── Radius rows – BUG FIX #9: accumulate per km key ──
+  for (const row of radiusRows) {
+    const s = getStore(row.idLoja, row.nomeLoja, row.uf, row.cidade);
+    const key = String(row.km);
+    s.raio[key] = (s.raio[key] || 0) + row.clientes;
+  }
+
+  // ── Post-processing ──
+  for (const s of map.values()) {
+    // Recalculate ticket per tipo
+    for (const t of Object.values(s.tipos)) {
+      t.tick = t.ped > 0 ? t.rec / t.ped : 0;
+    }
+    // Overall ticket (BUG FIX #8)
+    s.ticket = s.pedidos > 0 ? s.vendas / s.pedidos : 0;
+
+    // Total unique clients = sum across ALL tipos
+    s.totalClientes = ALL_TYPES.reduce((sum, t) => sum + (s.tipos[t]?.cli || 0), 0);
+
+    // Frequency = active orders / active clients
+    const activeCli = ACTIVE_TYPES.reduce((sum, t) => sum + (s.tipos[t]?.cli || 0), 0);
+    s.freqMedia = activeCli > 0 ? s.pedidos / activeCli : 0;
+  }
+
+  // Sort descending GMV
+  return Array.from(map.values()).sort((a, b) => b.vendas - a.vendas);
+}
+
+// ──────────────────────────────────────────────
+// NETWORK AVERAGES
+// ──────────────────────────────────────────────
+function calcNetworkAvg(stores) {
+  const active = stores.filter(s => s.pedidos > 0);
+  const n = active.length || 1;
+  const avgTicket = active.reduce((s, st) => s + st.ticket, 0) / n;
+  const totalCli  = stores.reduce((s, st) => s + st.totalClientes, 0) || 1;
+  const netPct = tipo => stores.reduce((s, st) => s + (st.tipos[tipo]?.cli || 0), 0) / totalCli * 100;
+  return {
+    ticket:     avgTicket,
+    pctFreq:    netPct('Frequentes'),
+    pctSum:     netPct('Sumidos'),
+    pctNov:     netPct('Novos'),
+    pctRec:     netPct('Recuperados'),
+    pctAlr:     netPct('Em alerta'),
+  };
+}
+
+// ──────────────────────────────────────────────
+// INSIGHT LINE GENERATOR
+// Gera até 3 tags contextuais comparando a loja com a média da rede.
+// ──────────────────────────────────────────────
+function generateInsight(s, rank, nStores, avg) {
+  const tc      = s.totalClientes || 1;
+  const pctFreq = (s.tipos['Frequentes']?.cli   || 0) / tc * 100;
+  const pctSum  = (s.tipos['Sumidos']?.cli       || 0) / tc * 100;
+  const pctNov  = (s.tipos['Novos']?.cli         || 0) / tc * 100;
+  const pctRec  = (s.tipos['Recuperados']?.cli   || 0) / tc * 100;
+  const tickDiff = avg.ticket > 0 ? (s.ticket - avg.ticket) / avg.ticket * 100 : 0;
+
+  const tags = [];
+
+  // ── Posição GMV ──
+  if      (rank === 1)                        tags.push({ text: '🥇 Líder de GMV',          bg:'#FFFBEB', c:'#92400E' });
+  else if (rank <= 3)                         tags.push({ text: `🏅 Top ${rank}° em GMV`,   bg:'#FFFBEB', c:'#92400E' });
+  else if (rank <= Math.ceil(nStores * 0.3))  tags.push({ text: '✦ Top 30% GMV',            bg:'#F0FDF4', c:'#166534' });
+
+  // ── Ticket vs rede ──
+  if      (tickDiff >= 25)  tags.push({ text: `Ticket +${Math.round(tickDiff)}% vs rede`,  bg:'#F0FDF4', c:'#166534' });
+  else if (tickDiff <= -20) tags.push({ text: `Ticket ${Math.round(tickDiff)}% vs rede`,   bg:'#FFF7ED', c:'#9A3412' });
+
+  // ── Fidelização ──
+  if      (pctFreq >= avg.pctFreq * 1.5) tags.push({ text: `Fidelização forte · ${Math.round(pctFreq)}% frequentes`, bg:'#EFF6FF', c:'#1D4ED8' });
+  else if (pctFreq <= avg.pctFreq * 0.55) tags.push({ text: `Fidelização baixa · ${Math.round(pctFreq)}% frequentes`, bg:'#FFF7ED', c:'#C2410C' });
+
+  // ── Churn / Sumidos ──
+  if      (pctSum >= 40)                  tags.push({ text: `⚠ Churn crítico · ${Math.round(pctSum)}% sumidos`,   bg:'#FEF2F2', c:'#B91C1C' });
+  else if (pctSum >= avg.pctSum * 1.35)   tags.push({ text: `Churn elevado · ${Math.round(pctSum)}% sumidos`,     bg:'#FFF7ED', c:'#C2410C' });
+  else if (pctSum <= avg.pctSum * 0.65)   tags.push({ text: `Churn controlado · ${Math.round(pctSum)}% sumidos`,  bg:'#F0FDF4', c:'#166534' });
+
+  // ── Aquisição ──
+  if (pctNov >= avg.pctNov * 1.5)  tags.push({ text: `Aquisição forte · ${Math.round(pctNov)}% novos`,        bg:'#EFF6FF', c:'#1E40AF' });
+
+  // ── Recuperação ──
+  if (pctRec >= 22) tags.push({ text: `Boa recuperação · ${Math.round(pctRec)}% recuperados`, bg:'#F5F3FF', c:'#6D28D9' });
+
+  // ── Fallback ──
+  if (tags.length === 0 && s.pedidos === 0)
+    tags.push({ text: 'Sem pedidos ativos no período', bg:'#F9FAFB', c:'#6B7280' });
+
+  return tags.slice(0, 3);
+}
+
+function insightHtml(tags) {
+  return tags.map(t =>
+    `<span style="background:${t.bg};color:${t.c};padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700;white-space:nowrap;line-height:1.6;">${t.text}</span>`
+  ).join('');
+}
+
+// ──────────────────────────────────────────────
+// RENDER NETWORK
+// ──────────────────────────────────────────────
+function renderNetwork(stores) {
+  const ns = document.getElementById('networkSection');
+  ns.style.display = 'block';
+
+  const totalPedidos = stores.reduce((s, st) => s + st.pedidos, 0);
+  const totalGMV     = stores.reduce((s, st) => s + st.vendas,  0);
+  const totalCli     = stores.reduce((s, st) => s + st.totalClientes, 0);
+  const avgTicket    = totalPedidos > 0 ? totalGMV / totalPedidos : 0;
+
+  // Network-level tipo totals
+  const netTipo = {};
+  for (const tipo of ALL_TYPES) netTipo[tipo] = 0;
+  for (const s of stores) {
+    for (const [tipo, d] of Object.entries(s.tipos)) {
+      netTipo[tipo] = (netTipo[tipo] || 0) + d.cli;
+    }
+  }
+  const netAllCli  = Object.values(netTipo).reduce((s, v) => s + v, 0);
+  const pct = tipo => netAllCli > 0 ? netTipo[tipo] / netAllCli * 100 : 0;
+
+  // KPI Cards
+  const kpis = [
+    { label: 'Lojas Ativas',    value: fmtN(stores.length),       sub: 'na rede',          color: 'var(--red)' },
+    { label: 'GMV Total',       value: fmtCur(totalGMV),          sub: 'receita bruta',     color: 'var(--green)' },
+    { label: 'Total Pedidos',   value: fmtN(totalPedidos),        sub: 'clientes ativos',   color: 'var(--blue)' },
+    { label: 'Clientes Únicos', value: fmtN(totalCli),            sub: 'toda a base',       color: 'var(--purple)' },
+    { label: 'Ticket Médio',    value: fmtCur(avgTicket),         sub: 'rede geral',        color: 'var(--orange)' },
+    { label: '% Frequentes',    value: fmtPct(pct('Frequentes')), sub: 'da base ativa',     color: 'var(--blue)' },
+    { label: '% Novos',         value: fmtPct(pct('Novos')),      sub: 'aquisição',         color: 'var(--green)' },
+    { label: '% Sumidos',       value: fmtPct(pct('Sumidos')),    sub: 'risco de perda',    color: 'var(--red)' },
+  ];
+
+  document.getElementById('kpiNetwork').innerHTML = kpis.map(k => `
+    <div class="kpi-card" style="border-left-color:${k.color}">
+      <div class="kpi-label">${k.label}</div>
+      <div class="kpi-value" style="color:${k.color}">${k.value}</div>
+      <div class="kpi-sub">${k.sub}</div>
+    </div>
+  `).join('');
+
+  // Pareto
+  let cumGMV = 0, paretoN = 0;
+  for (const s of stores) {
+    cumGMV += s.vendas;
+    paretoN++;
+    if (cumGMV >= totalGMV * 0.8) break;
+  }
+  const paretoPct = stores.length > 0 ? (paretoN / stores.length * 100).toFixed(0) : 0;
+  document.getElementById('paretoBanner').innerHTML = `
+    <div class="pareto-banner">
+      <div class="tag">ANÁLISE DE PARETO</div>
+      <div class="msg">${paretoN} loja${paretoN !== 1 ? 's' : ''} (${paretoPct}% da rede) geram 80% do GMV total da rede</div>
+      <div class="detail">GMV acumulado: ${fmtCur(cumGMV)} de ${fmtCur(totalGMV)}</div>
+    </div>
+  `;
+
+  // Network averages for insight generation
+  const netAvg = calcNetworkAvg(stores);
+
+  // Ranking table
+  const limit = Math.min(stores.length, 190);
+  document.getElementById('rankingCount').textContent =
+    `Exibindo ${limit} de ${stores.length} loja${stores.length !== 1 ? 's' : ''}`;
+
+  document.getElementById('rankingBody').innerHTML = stores.slice(0, limit).map((s, i) => {
+    const rank    = i + 1;
+    const rankCls = rank === 1 ? 'rank r1' : rank === 2 ? 'rank r2' : rank === 3 ? 'rank r3' : 'rank';
+    const tags    = generateInsight(s, rank, stores.length, netAvg);
+    const cidade  = s.cidade.split(' ').map(w => w[0] + w.slice(1).toLowerCase()).join(' ');
+
+    // Mini health score for the row
+    const tc       = s.totalClientes || 1;
+    const pctFreq  = (s.tipos['Frequentes']?.cli || 0) / tc * 100;
+    const pctSum   = (s.tipos['Sumidos']?.cli    || 0) / tc * 100;
+    const cliDist  = s.c1+s.c2+s.c3+s.c4+s.c5;
+    const pctRec2  = cliDist > 0 ? (s.c2+s.c3+s.c4+s.c5)/cliDist*100 : 0;
+    const miniScore = Math.round(
+      Math.min(pctFreq/35*25,25) +
+      Math.min((100-pctSum)/85*25,25) +
+      Math.min(pctRec2/45*20,20) +
+      Math.min((s.ticket/100)*15,15)
+    );
+    const scoreColor = miniScore>=75?'#2DB14B':miniScore>=50?'#1A73E8':miniScore>=30?'#F5A623':'#EA1D2C';
+    const scoreLabel = miniScore>=75?'Excelente':miniScore>=50?'Bom':miniScore>=30?'Atenção':'Crítico';
+
+    return `
+      <tr onclick="selectStore('${s.idLoja}')" title="Clique para ver o Deep Dive">
+        <td style="width:36px;"><span class="${rankCls}">${rank}°</span></td>
+        <td style="min-width:260px; max-width:320px;">
+          <div style="font-weight:700; font-size:13px; line-height:1.3;">${s.nomeLoja}</div>
+          <div style="display:flex; gap:4px; flex-wrap:wrap; margin:5px 0 3px;">${insightHtml(tags)}</div>
+          <div style="font-size:10px; color:#AAAAAA;">ID ${s.idLoja}</div>
+        </td>
+        <td style="white-space:nowrap; font-size:12px;">${s.uf}<br><span style="color:var(--muted); font-size:11px;">${cidade}</span></td>
+        <td style="font-weight:800; color:var(--green); white-space:nowrap; font-size:13.5px;">${fmtCur(s.vendas)}</td>
+        <td style="font-size:12.5px;">${fmtN(s.pedidos)}</td>
+        <td style="white-space:nowrap; font-size:12.5px;">${fmtCur(s.ticket)}</td>
+        <td style="font-size:12.5px;">${fmtN(s.totalClientes)}</td>
+        <td style="white-space:nowrap; font-size:12.5px;">${fmtDec(s.freqMedia,2)}×</td>
+        <td>
+          <div style="display:inline-flex; align-items:center; gap:5px;">
+            <svg width="30" height="30" viewBox="0 0 30 30">
+              <circle cx="15" cy="15" r="12" fill="none" stroke="#E0E0E0" stroke-width="3"/>
+              <circle cx="15" cy="15" r="12" fill="none" stroke="${scoreColor}" stroke-width="3"
+                stroke-dasharray="${(2*Math.PI*12).toFixed(1)}"
+                stroke-dashoffset="${(2*Math.PI*12*(1-miniScore/100)).toFixed(1)}"
+                stroke-linecap="round" transform="rotate(-90 15 15)"/>
+            </svg>
+            <div>
+              <div style="font-weight:700; font-size:12px; color:${scoreColor};">${miniScore}</div>
+              <div style="font-size:9.5px; color:var(--muted); line-height:1;">${scoreLabel}</div>
+            </div>
+          </div>
+        </td>
+      </tr>`;
+  }).join('');
+}
+
+// ──────────────────────────────────────────────
+// SELECTOR
+// ──────────────────────────────────────────────
+function populateSelector(stores) {
+  document.getElementById('storeSelector').innerHTML = stores.map(s =>
+    `<option value="${s.idLoja}">${s.nomeLoja} (${s.uf})</option>`
+  ).join('');
+}
+
+function selectStore(idLoja) {
+  document.getElementById('storeSelector').value = idLoja;
+  renderDeepDive(idLoja);
+  setTimeout(() => document.getElementById('deepDiveSection').scrollIntoView({ behavior: 'smooth' }), 50);
+}
+
+// ──────────────────────────────────────────────
+// RENDER DEEP DIVE
+// BUG FIX #11: destrói TODOS os charts antes de recriar.
+// BUG FIX #12: raio dinâmico—ordena as chaves numericamente.
+// BUG FIX #13: pctRecorrentes usa clientes (c2+c3+c4+c5), não pedidos.
+// ──────────────────────────────────────────────
+function renderDeepDive(idLoja) {
+  const s = STORES_DATA.find(st => st.idLoja === idLoja);
+  if (!s) return;
+
+  // BUG FIX #11: destroy ALL chart instances
+  for (const key of Object.keys(CHARTS)) {
+    if (CHARTS[key]) { CHARTS[key].destroy(); delete CHARTS[key]; }
+  }
+
+  const dd = document.getElementById('deepDiveSection');
+  dd.style.display = 'block';
+
+  // ── Derived metrics ──
+  const totalCli   = s.totalClientes;
+  const activeCli  = ACTIVE_TYPES.reduce((sum, t) => sum + (s.tipos[t]?.cli || 0), 0);
+  const inactiveCli = INACTIVE_TYPES.reduce((sum, t) => sum + (s.tipos[t]?.cli || 0), 0);
+
+  const pct = tipo => totalCli > 0 ? (s.tipos[tipo]?.cli || 0) / totalCli * 100 : 0;
+
+  const taxaRetencao = activeCli > 0
+    ? (s.tipos['Frequentes']?.cli || 0) / activeCli * 100 : 0;
+  const taxaRisco = totalCli > 0 ? inactiveCli / totalCli * 100 : 0;
+  const clvMedio  = totalCli > 0 ? s.vendas / totalCli : 0;
+
+  // BUG FIX #13: recorrência = clientes com 2+ pedidos / total clientes por freq.
+  const totalCliDist = s.c1 + s.c2 + s.c3 + s.c4 + s.c5;
+  const pctRecorrentes = totalCliDist > 0
+    ? (s.c2 + s.c3 + s.c4 + s.c5) / totalCliDist * 100 : 0;
+
+  // BUG FIX #12: raio – sort keys numerically
+  const raioKeys = Object.keys(s.raio).map(Number).sort((a, b) => a - b);
+  const totalRaioCli = raioKeys.reduce((sum, k) => sum + (s.raio[String(k)] || 0), 0);
+  const dentro3km    = [1, 2, 3].reduce((sum, k) => sum + (s.raio[String(k)] || 0), 0);
+  const pctDentro3km = totalRaioCli > 0 ? dentro3km / totalRaioCli * 100 : 0;
+
+  // ── Health Score (0-100) ──
+  // Componentes (somam 100):
+  //  Retenção (Frequentes%)    → 25 pts  [referência: 35% = pleno]
+  //  Anti-churn (1-Sumidos%)   → 25 pts  [referência: <15% sumidos = pleno]
+  //  Recorrência (2+ pedidos%) → 20 pts  [referência: 45% = pleno]
+  //  CLV médio                 → 15 pts  [referência: R$100 = pleno]
+  //  Proximidade raio (≤3km)   → 15 pts  [referência: 65% = pleno]
+  const sc_ret  = Math.min(pct('Frequentes') / 35 * 25, 25);
+  const sc_chu  = Math.min((100 - pct('Sumidos'))  / 85 * 25, 25);
+  const sc_rec  = Math.min(pctRecorrentes / 45 * 20, 20);
+  const sc_clv  = Math.min(clvMedio / 100 * 15, 15);
+  const sc_raio = raioKeys.length > 0 ? Math.min(pctDentro3km / 65 * 15, 15) : 7.5;
+  const healthScore = Math.round(sc_ret + sc_chu + sc_rec + sc_clv + sc_raio);
+
+  const scoreColor = healthScore >= 75 ? '#2DB14B'
+                   : healthScore >= 50 ? '#1A73E8'
+                   : healthScore >= 30 ? '#F5A623'
+                   :                    '#EA1D2C';
+  const scoreLabel = healthScore >= 75 ? 'Excelente'
+                   : healthScore >= 50 ? 'Bom'
+                   : healthScore >= 30 ? 'Atenção'
+                   :                    'Crítico';
+
+  // SVG gauge constants
+  const R = 46, CX = 60, CY = 60;
+  const CIRC = 2 * Math.PI * R;
+  const dash = CIRC * (1 - healthScore / 100);
+
+  const tiposPresentes = ALL_TYPES.filter(t => s.tipos[t]);
+
+  // ── Render HTML ──
+  document.getElementById('deepDiveContent').innerHTML = `
+    <div class="sec-title">Deep Dive — ${s.nomeLoja}</div>
+    <div style="font-size:12px; color:var(--muted); margin:-10px 0 18px;">
+      ID: ${s.idLoja} &nbsp;·&nbsp; ${s.uf} &nbsp;·&nbsp; ${s.cidade.split(' ').map(w=>w[0]+w.slice(1).toLowerCase()).join(' ')}
+    </div>
+
+    <!-- ROW 1: Score | Tipos Donut | Freq. Compra -->
+    <div class="dd-grid-3" style="margin-bottom:16px;">
+
+      <!-- Health Score -->
+      <div class="card score-wrap">
+        <div style="font-size:10.5px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.06em; margin-bottom:10px;">Score de Saúde</div>
+        <svg width="120" height="120" viewBox="0 0 120 120">
+          <circle cx="${CX}" cy="${CY}" r="${R}" fill="none" stroke="#E0E0E0" stroke-width="10"/>
+          <circle cx="${CX}" cy="${CY}" r="${R}" fill="none"
+            stroke="${scoreColor}" stroke-width="10"
+            stroke-dasharray="${CIRC.toFixed(2)}" stroke-dashoffset="${dash.toFixed(2)}"
+            stroke-linecap="round"
+            transform="rotate(-90 ${CX} ${CY})"/>
+          <text x="${CX}" y="${CY - 6}" text-anchor="middle" dominant-baseline="middle"
+            font-size="22" font-weight="800" fill="${scoreColor}"
+            font-family="Plus Jakarta Sans, sans-serif">${healthScore}</text>
+          <text x="${CX}" y="${CY + 14}" text-anchor="middle" dominant-baseline="middle"
+            font-size="11" fill="${scoreColor}" font-weight="700">${scoreLabel}</text>
+        </svg>
+        <div style="font-size:11px; color:var(--muted); line-height:1.7; margin-top:8px;">
+          <div>Retenção: <b>${fmtPct(pct('Frequentes'))}</b></div>
+          <div>Recorrência: <b>${fmtPct(pctRecorrentes)}</b></div>
+          <div>Sumidos: <b style="color:${pct('Sumidos')>30?'var(--red)':'inherit'}">${fmtPct(pct('Sumidos'))}</b></div>
+          ${raioKeys.length ? `<div>Dentro 3km: <b>${fmtPct(pctDentro3km)}</b></div>` : ''}
+        </div>
+      </div>
+
+      <!-- Tipo Donut -->
+      <div class="card">
+        <div style="font-size:10.5px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.06em; margin-bottom:10px;">Distribuição por Segmento</div>
+        <canvas id="chartTipos" height="200"></canvas>
+      </div>
+
+      <!-- Frequency Distribution -->
+      <div class="card">
+        <div style="font-size:10.5px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.06em; margin-bottom:10px;">Frequência de Compra (clientes)</div>
+        <canvas id="chartFreq" height="200"></canvas>
+      </div>
+
+    </div>
+
+    <!-- ROW 2: CRM KPIs | Ticket por Tipo | Raio -->
+    <div class="dd-grid-3b" style="margin-bottom:16px;">
+
+      <!-- CRM KPIs -->
+      <div class="card">
+        <div style="font-size:10.5px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.06em; margin-bottom:10px;">Indicadores CRM (16)</div>
+        ${[
+          ['1. Clientes Únicos',     fmtN(totalCli)],
+          ['2. Clientes Ativos',     fmtN(activeCli)],
+          ['3. Clientes Inativos',   fmtN(inactiveCli)],
+          ['4. Total de Pedidos',    fmtN(s.pedidos)],
+          ['5. GMV (Receita)',        fmtCur(s.vendas)],
+          ['6. Ticket Médio',        fmtCur(s.ticket)],
+          ['7. Frequência Média',    fmtDec(s.freqMedia, 2) + '×'],
+          ['8. CLV Médio',           fmtCur(clvMedio)],
+          ['9. % Novos',             fmtPct(pct('Novos'))],
+          ['10. % Frequentes',       fmtPct(pct('Frequentes'))],
+          ['11. % Recuperados',      fmtPct(pct('Recuperados'))],
+          ['12. % Em Alerta',        fmtPct(pct('Em alerta'))],
+          ['13. % Sumidos',          fmtPct(pct('Sumidos'))],
+          ['14. Taxa de Retenção',   fmtPct(taxaRetencao)],
+          ['15. Índice de Risco',    fmtPct(taxaRisco)],
+          ['16. % Recorrentes (2+)', fmtPct(pctRecorrentes)],
+        ].map(([l, v]) => `
+          <div class="metric-row">
+            <span class="metric-label">${l}</span>
+            <span class="metric-value">${v}</span>
+          </div>`).join('')}
+      </div>
+
+      <!-- Ticket por Tipo -->
+      <div class="card">
+        <div style="font-size:10.5px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.06em; margin-bottom:10px;">Ticket Médio por Segmento</div>
+        <canvas id="chartTicket" height="240"></canvas>
+      </div>
+
+      <!-- Raio -->
+      <div class="card">
+        <div style="font-size:10.5px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.06em; margin-bottom:10px;">Clientes por Raio de Entrega</div>
+        ${raioKeys.length
+          ? `<canvas id="chartRaio" height="240"></canvas>
+             <div style="font-size:11px; color:var(--muted); margin-top:8px;">${fmtPct(pctDentro3km)} dos clientes dentro de 3 km</div>`
+          : `<p class="empty-msg">Dados de raio não disponíveis para esta loja.</p>`
+        }
+      </div>
+
+    </div>
+
+    <!-- ROW 3: Segment Detail Table -->
+    <div class="card">
+      <div style="font-size:10.5px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.06em; margin-bottom:12px;">Detalhamento por Segmento</div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Segmento</th>
+              <th>Clientes</th>
+              <th>% Base</th>
+              <th>Pedidos</th>
+              <th>Receita</th>
+              <th>Ticket Médio</th>
+              <th>Frequência</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${tiposPresentes.map(tipo => {
+              const t = s.tipos[tipo];
+              const pBase = totalCli > 0 ? t.cli / totalCli * 100 : 0;
+              const ts = TIPO_STYLE[tipo] || { pill: '', color: '#333', bg: '#ccc' };
+              return `
+                <tr>
+                  <td><span class="pill ${ts.pill}">${tipo}</span></td>
+                  <td style="font-weight:700;">${fmtN(t.cli)}</td>
+                  <td>
+                    <div class="mini-bar-wrap">
+                      <div class="mini-bar-track">
+                        <div class="mini-bar-fill" style="width:${Math.min(pBase,100)}%;background:${ts.color};"></div>
+                      </div>
+                      <span>${fmtPct(pBase)}</span>
+                    </div>
+                  </td>
+                  <td>${fmtN(t.ped)}</td>
+                  <td style="color:var(--green); font-weight:700;">${fmtCur(t.rec)}</td>
+                  <td>${fmtCur(t.tick)}</td>
+                  <td>${fmtDec(t.freq, 2)}×</td>
+                </tr>`;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `;
+
+  // ── BUILD CHARTS ──
+
+  // Chart 1: Segment Doughnut
+  const tipoLabels  = tiposPresentes;
+  const tipoData    = tiposPresentes.map(t => s.tipos[t].cli);
+  const tipoBg      = tiposPresentes.map(t => (TIPO_STYLE[t] || {}).bg || '#ccc');
+  const tipoBorder  = tiposPresentes.map(t => (TIPO_STYLE[t] || {}).color || '#999');
+
+  CHARTS.tipos = new Chart(document.getElementById('chartTipos'), {
+    type: 'doughnut',
+    data: {
+      labels: tipoLabels,
+      datasets: [{ data: tipoData, backgroundColor: tipoBg, borderColor: tipoBorder, borderWidth: 2, hoverOffset: 6 }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      cutout: '60%',
+      plugins: {
+        legend: { position: 'right', labels: { font: { size: 11 }, boxWidth: 12, padding: 12 } },
+        tooltip: {
+          callbacks: {
+            label: ctx => ` ${ctx.label}: ${fmtN(ctx.parsed)} (${fmtPct(totalCli > 0 ? ctx.parsed / totalCli * 100 : 0)})`
+          }
+        }
+      }
+    }
+  });
+
+  // Chart 2: Frequency distribution bar
+  CHARTS.freq = new Chart(document.getElementById('chartFreq'), {
+    type: 'bar',
+    data: {
+      labels: ['1 pedido', '2 pedidos', '3 pedidos', '4 pedidos', '5+ pedidos'],
+      datasets: [{
+        label: 'Clientes',
+        data: [s.c1, s.c2, s.c3, s.c4, s.c5],
+        backgroundColor: [
+          'rgba(234,29,44,0.80)', 'rgba(234,29,44,0.62)',
+          'rgba(234,29,44,0.46)', 'rgba(234,29,44,0.30)', 'rgba(234,29,44,0.16)'
+        ],
+        borderColor: 'rgba(234,29,44,0.9)',
+        borderWidth: 1,
+        borderRadius: 6,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      plugins: { legend: { display: false } },
+      scales: {
+        y: { beginAtZero: true, grid: { color: '#F0F0F0' }, ticks: { font: { size: 11 } } },
+        x: { grid: { display: false }, ticks: { font: { size: 10 } } }
+      }
+    }
+  });
+
+  // Chart 3: Ticket por tipo (horizontal bar)
+  CHARTS.ticket = new Chart(document.getElementById('chartTicket'), {
+    type: 'bar',
+    data: {
+      labels: tiposPresentes,
+      datasets: [{
+        label: 'Ticket Médio (R$)',
+        data: tiposPresentes.map(t => parseFloat(s.tipos[t].tick.toFixed(2))),
+        backgroundColor: tipoBg,
+        borderColor: tipoBorder,
+        borderWidth: 1,
+        borderRadius: 6,
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      maintainAspectRatio: true,
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: ctx => ` R$ ${fmtDec(ctx.parsed.x, 2)}` } }
+      },
+      scales: {
+        x: { beginAtZero: true, grid: { color: '#F0F0F0' }, ticks: { font: { size: 11 }, callback: v => 'R$ ' + fmtDec(v, 0) } },
+        y: { grid: { display: false }, ticks: { font: { size: 11 } } }
+      }
+    }
+  });
+
+  // Chart 4: Raio bar – BUG FIX #12: dynamic km range
+  if (raioKeys.length > 0) {
+    const raioData   = raioKeys.map(k => s.raio[String(k)] || 0);
+    const raioBg     = raioKeys.map(k => k <= 3 ? 'rgba(26,115,232,0.78)' : 'rgba(26,115,232,0.35)');
+    const raioBorder = raioKeys.map(k => k <= 3 ? 'rgba(26,115,232,0.95)' : 'rgba(26,115,232,0.55)');
+
+    CHARTS.raio = new Chart(document.getElementById('chartRaio'), {
+      type: 'bar',
+      data: {
+        labels: raioKeys.map(k => `${k} km`),
+        datasets: [{
+          label: 'Clientes',
+          data: raioData,
+          backgroundColor: raioBg,
+          borderColor: raioBorder,
+          borderWidth: 1,
+          borderRadius: 4,
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        plugins: {
+          legend: { display: false },
+          tooltip: { callbacks: { label: ctx => ` ${fmtN(ctx.parsed.y)} clientes` } }
+        },
+        scales: {
+          y: { beginAtZero: true, grid: { color: '#F0F0F0' }, ticks: { font: { size: 11 } } },
+          x: { grid: { display: false }, ticks: { font: { size: 11 } } }
+        }
+      }
+    });
+  }
+}
+
+// ──────────────────────────────────────────────
+// MAIN PROCESS FUNCTION
+// ──────────────────────────────────────────────
+function processData() {
+  const txtActive   = document.getElementById('inputActive').value.trim();
+  const txtInactive = document.getElementById('inputInactive').value.trim();
+  const txtRadius   = document.getElementById('inputRadius').value.trim();
+
+  if (!txtActive && !txtInactive) {
+    showToast('Cole ao menos os dados de Clientes Ativos ou Inativos.', 'error');
+    return;
+  }
+
+  const statusEl = document.getElementById('statusMsg');
+  statusEl.textContent = 'Processando…';
+
+  // Use setTimeout to allow UI to update before heavy processing
+  setTimeout(() => {
+    try {
+      const activeRows   = txtActive   ? parseActive(txtActive)     : [];
+      const inactiveRows = txtInactive ? parseInactive(txtInactive) : [];
+      const radiusRows   = txtRadius   ? parseRadius(txtRadius)     : [];
+
+      if (activeRows.length === 0 && inactiveRows.length === 0) {
+        showToast('Nenhum dado válido encontrado. Verifique o formato dos dados.', 'error');
+        statusEl.textContent = '';
+        return;
+      }
+
+      STORES_DATA = aggregateByStore(activeRows, inactiveRows, radiusRows);
+
+      if (STORES_DATA.length === 0) {
+        showToast('Não foi possível identificar lojas nos dados.', 'error');
+        statusEl.textContent = '';
+        return;
+      }
+
+      renderNetwork(STORES_DATA);
+      populateSelector(STORES_DATA);
+
+      // Render the top store by default
+      const first = STORES_DATA[0];
+      document.getElementById('storeSelector').value = first.idLoja;
+      renderDeepDive(first.idLoja);
+
+      statusEl.textContent = '';
+      showToast(`✅ ${STORES_DATA.length} loja${STORES_DATA.length !== 1 ? 's' : ''} processada${STORES_DATA.length !== 1 ? 's' : ''} com sucesso!`, 'success');
+
+      document.getElementById('networkSection').scrollIntoView({ behavior: 'smooth' });
+
+    } catch (err) {
+      console.error(err);
+      showToast('Erro ao processar: ' + err.message, 'error');
+      statusEl.textContent = '';
+    }
+  }, 50);
+}
+
+// ──────────────────────────────────────────────
+// EVENT LISTENERS – BUG FIX #14: addEventListener, não onclick inline no button
+// ──────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('btnProcess').addEventListener('click', processData);
+  document.getElementById('storeSelector').addEventListener('change', e => {
+    renderDeepDive(e.target.value);
+  });
+});
+</script>
+</body>
+</html>
